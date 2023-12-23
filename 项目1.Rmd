@@ -1,0 +1,245 @@
+---
+title: "R Notebook"
+output:
+  word_document: default
+  html_notebook: default
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+#项目1 回归模型
+library(tidyverse)
+library(dplyr)
+education_data <- read.csv('C:/users/86159/Desktop/education.csv',fileEncoding = "UTF-8")
+
+# 去除含有缺失值的行
+education_data <- education_data %>% 
+                  na.omit() 
+#去除重复值
+education_data <- distinct(education_data)
+# 对每个数值型变量，计算均值、中位数和标准差
+education_data %>%
+  select_if(is.numeric) %>% 
+  summarise_all(list(mean = ~mean(., na.rm = TRUE), 
+                     median = ~median(., na.rm = TRUE), 
+                     sd = ~sd(., na.rm = TRUE)))
+
+library(ggplot2)
+
+# 绘制各国家小学总入学率的柱状图
+ggplot(education_data, aes(x = Countries.and.areas, y = Gross_Primary_Education_Enrollment)) + geom_bar(stat = "identity",fill="lightblue") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    labs(title = "Primary School Enrollment Rates by Country",
+         x = "Country",
+         y = "Enrollment Rate (%)")
+# 绘制各国家高等教育总入学率的柱状图
+ggplot(education_data, aes(x = Countries.and.areas, y =  Gross_Tertiary_Education_Enrollment)) + geom_bar(stat = "identity",fill="lightblue") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    labs(title = "Tertiary_Education Enrollment Rates by Country",
+         x = "Country",
+         y = "Enrollment Rate (%)")
+
+library(caret)
+
+# (1)高等教育总入学人数预测模型
+
+#①用5至24岁男、女青年的识字率Youth_15_24_Literacy_Rate_Male、Youth_15_24_Literacy_Rate_Female作为自变量
+
+model_vars1 <- c("Gross_Tertiary_Education_Enrollment", "Youth_15_24_Literacy_Rate_Male", "Youth_15_24_Literacy_Rate_Female")
+# 建立线性回归模型
+model_tertiary1 <- lm(Gross_Tertiary_Education_Enrollment ~ ., data = education_data[, model_vars1])
+# 绘制图表。x轴是模型预测的高等教育总入学率，y轴是实际的高等教育总入学率。散点越靠近参考线代表预测越准确
+ggplot(education_data, aes(x = fitted(model_tertiary1), y = Gross_Tertiary_Education_Enrollment)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1,color = "red")
+
+#求出相关系数,f统计量和t统计量
+model_summary <- summary(model_tertiary1)
+model_summary
+# R平方值
+r_squared <- model_summary$r.squared
+print(paste("R平方值:", r_squared))
+# f统计量
+f_statistic <- model_summary$fstatistic[1]
+print(paste("f统计量:", f_statistic))
+# t统计量（对每个系数）
+t_values <- model_summary$coefficients[, "t value"]
+print("各个系数的t统计量:")
+print(t_values)
+
+
+
+
+#②用高中教育完成率Completion_Rate_Upper_Secondary_Male,Completion_Rate_Upper_Secondary_Female作为自变量
+
+
+model_vars2 <- c("Gross_Tertiary_Education_Enrollment", "Completion_Rate_Upper_Secondary_Male","Completion_Rate_Upper_Secondary_Female")
+model_tertiary2 <- lm(Gross_Tertiary_Education_Enrollment ~ ., data = education_data[, model_vars2])
+ggplot(education_data, aes(x = fitted(model_tertiary2), y = Gross_Tertiary_Education_Enrollment)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1,color = "red")
+
+model_summary <- summary(model_tertiary2)
+model_summary
+r_squared <- model_summary$r.squared
+print(paste("R平方值:", r_squared))
+f_statistic <- model_summary$fstatistic[1]
+print(paste("f统计量:", f_statistic))
+t_values <- model_summary$coefficients[, "t value"]
+print("各个系数的t统计量:")
+print(t_values)
+
+
+#③用出生率Birth_Rate作为自变量
+
+model_vars3 <- c("Gross_Tertiary_Education_Enrollment", "Birth_Rate")
+model_tertiary3 <- lm(Gross_Tertiary_Education_Enrollment ~ ., data = education_data[, model_vars3])
+ggplot(education_data, aes(x = fitted(model_tertiary3), y = Gross_Tertiary_Education_Enrollment)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1,color = "red")
+
+model_summary <- summary(model_tertiary3)
+model_summary
+r_squared <- model_summary$r.squared
+print(paste("R平方值:", r_squared))
+f_statistic <- model_summary$fstatistic[1]
+print(paste("f统计量:", f_statistic))
+t_values <- model_summary$coefficients[, "t value"]
+print("各个系数的t统计量:")
+print(t_values)
+
+
+#④用Primary_End_Proficiency_Reading,Primary_End_Proficiency_Math,Lower_Secondary_End_Proficiency_Reading,Lower_Secondary_End_Proficiency_Math作为自变量
+
+model_vars4 <- c("Gross_Tertiary_Education_Enrollment", "Primary_End_Proficiency_Reading", "Primary_End_Proficiency_Math","Lower_Secondary_End_Proficiency_Reading","Lower_Secondary_End_Proficiency_Math")
+model_tertiary4<- lm(Gross_Tertiary_Education_Enrollment ~ ., data = education_data[, model_vars4])
+ggplot(education_data, aes(x = fitted(model_tertiary4), y = Gross_Tertiary_Education_Enrollment)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1,color = "red")
+model_summary <- summary(model_tertiary4)
+model_summary
+r_squared <- model_summary$r.squared
+print(paste("R平方值:", r_squared))
+f_statistic <- model_summary$fstatistic[1]
+print(paste("f统计量:", f_statistic))
+t_values <- model_summary$coefficients[, "t value"]
+print("各个系数的t统计量:")
+print(t_values)
+
+
+#⑤用Completion_Rate_Primary_Male,Completion_Rate_Primary_Female,Completion_Rate_Lower_Secondary_Male,Completion_Rate_Lower_Secondary_Female作为自变量
+
+model_vars5<- c("Gross_Tertiary_Education_Enrollment", "Completion_Rate_Primary_Male","Completion_Rate_Primary_Female","Completion_Rate_Lower_Secondary_Male","Completion_Rate_Lower_Secondary_Female")
+model_tertiary5 <- lm(Gross_Tertiary_Education_Enrollment ~ ., data = education_data[, model_vars5])
+ggplot(education_data, aes(x = fitted(model_tertiary5), y = Gross_Tertiary_Education_Enrollment)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1,color = "red")
+
+model_summary <- summary(model_tertiary5)
+model_summary
+r_squared <- model_summary$r.squared
+print(paste("R平方值:", r_squared))
+f_statistic <- model_summary$fstatistic[1]
+print(paste("f统计量:", f_statistic))
+t_values <- model_summary$coefficients[, "t value"]
+print("各个系数的t统计量:")
+print(t_values)
+
+
+#⑥从上述5个回归模型中取若干个自变量，即Youth_15_24_Literacy_Rate_Male,Gross_Primary_Education_Enrollment,Birth_Rate,Primary_End_Proficiency_Reading,Primary_End_Proficiency_Math,作为自变量
+
+model_vars6<- c("Gross_Tertiary_Education_Enrollment", "Youth_15_24_Literacy_Rate_Male","Gross_Primary_Education_Enrollment","Birth_Rate","Primary_End_Proficiency_Reading","Primary_End_Proficiency_Math")
+model_tertiary6 <- lm(Gross_Tertiary_Education_Enrollment ~ ., data = education_data[, model_vars6])
+ggplot(education_data, aes(x = fitted(model_tertiary6), y = Gross_Tertiary_Education_Enrollment)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1,color = "red")
+
+model_summary <- summary(model_tertiary6)
+model_summary
+r_squared <- model_summary$r.squared
+print(paste("R平方值:", r_squared))
+f_statistic <- model_summary$fstatistic[1]
+print(paste("f统计量:", f_statistic))
+t_values <- model_summary$coefficients[, "t value"]
+print("各个系数的t统计量:")
+print(t_values)
+
+# (2)失业率预测模型
+
+#①用小学、初中、高中教育完成率Completion_Rate_Upper_Secondary_Male,Completion_Rate_Upper_Secondary_Female,Completion_Rate_Primary_Male,Completion_Rate_Primary_Female,Completion_Rate_Lower_Secondary_Male,Completion_Rate_Lower_Secondary_Female作为自变量
+
+model_vars7 <- c("Unemployment_Rate", "Completion_Rate_Upper_Secondary_Male", "Completion_Rate_Upper_Secondary_Female","Completion_Rate_Primary_Male","Completion_Rate_Primary_Female","Completion_Rate_Lower_Secondary_Male","Completion_Rate_Lower_Secondary_Female")
+model_unemployment7<- lm(Unemployment_Rate ~ ., data = education_data[, model_vars7])
+ggplot(education_data, aes(x = fitted(model_unemployment7), y = Unemployment_Rate)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1,color = "red")
+model_summary <- summary(model_unemployment7)
+model_summary
+r_squared <- model_summary$r.squared
+print(paste("R平方值:", r_squared))
+f_statistic <- model_summary$fstatistic[1]
+print(paste("f统计量:", f_statistic))
+t_values <- model_summary$coefficients[, "t value"]
+print("各个系数的t统计量:")
+print(t_values)
+
+#②用15~24岁男女青年识字率Youth_15_24_Literacy_Rate_Male,Youth_15_24_Literacy_Rate_Female作为自变量
+
+model_vars8 <- c("Unemployment_Rate", "Youth_15_24_Literacy_Rate_Male", "Youth_15_24_Literacy_Rate_Female")
+model_unemployment8<- lm(Unemployment_Rate ~ ., data = education_data[, model_vars8])
+ggplot(education_data, aes(x = fitted(model_unemployment8), y = Unemployment_Rate)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1,color = "red")
+model_summary <- summary(model_unemployment8)
+model_summary
+r_squared <- model_summary$r.squared
+print(paste("R平方值:", r_squared))
+f_statistic <- model_summary$fstatistic[1]
+print(paste("f统计量:", f_statistic))
+t_values <- model_summary$coefficients[, "t value"]
+print("各个系数的t统计量:")
+print(t_values)
+
+#③用出生率Birth_Rate，小学总入学率Gross_Primary_Education_Enrollment,高等教育总入学率Gross_Tertiary_Education_Enrollment作为自变量
+
+model_vars9 <- c("Unemployment_Rate","Birth_Rate","Gross_Primary_Education_Enrollment","Completion_Rate_Lower_Secondary_Male","Gross_Tertiary_Education_Enrollment")
+model_unemployment9<- lm(Unemployment_Rate ~ ., data = education_data[, model_vars9])
+ggplot(education_data, aes(x = fitted(model_unemployment9), y = Unemployment_Rate)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1,color = "red")
+model_summary <- summary(model_unemployment9)
+model_summary
+r_squared <- model_summary$r.squared
+print(paste("R平方值:", r_squared))
+f_statistic <- model_summary$fstatistic[1]
+print(paste("f统计量:", f_statistic))
+t_values <- model_summary$coefficients[, "t value"]
+print("各个系数的t统计量:")
+print(t_values)
+
+#④用初中结束阶段阅读和数学能力Lower_Secondary_End_Proficiency_Reading,Lower_Secondary_End_Proficiency_Math作为自变量
+
+model_vars10 <- c("Unemployment_Rate", "Lower_Secondary_End_Proficiency_Reading","Lower_Secondary_End_Proficiency_Math")
+model_unemployment10<- lm(Unemployment_Rate ~ ., data = education_data[, model_vars10])
+ggplot(education_data, aes(x = fitted(model_unemployment10), y = Unemployment_Rate)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1,color = "red")
+model_summary <- summary(model_unemployment10)
+model_summary
+r_squared <- model_summary$r.squared
+print(paste("R平方值:", r_squared))
+f_statistic <- model_summary$fstatistic[1]
+print(paste("f统计量:", f_statistic))
+t_values <- model_summary$coefficients[, "t value"]
+print("各个系数的t统计量:")
+print(t_values)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
